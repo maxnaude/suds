@@ -742,12 +742,13 @@ class Element:
     def str(self, indent=0):
         """
         Get a string representation of this XML fragment.
-        @param indent: The indent to be used in formatting the output.
+        @param indent: The indent to be used in formatting the output -
+                       pass a negative number to switch off indentation
         @type indent: int
         @return: A I{pretty} string.
         @rtype: basestring
         """
-        tab = '%*s'%(indent*3,'')
+        tab = '' if indent < 0 else '%*s' % (indent*3, '')
         result = []
         result.append('%s<%s' % (tab, self.qname()))
         result.append(self.nsdeclarations())
@@ -760,36 +761,22 @@ class Element:
         if self.hasText():
             result.append(self.text.escape())
         for c in self.children:
-            result.append('\n')
-            result.append(c.str(indent+1))
-        if len(self.children):
+            if indent >= 0:
+                result.append('\n')
+            result.append(c.str(-1 if indent < 0 else indent + 1))
+        if len(self.children) and indent >= 0:
             result.append('\n%s' % tab)
         result.append('</%s>' % self.qname())
         result = ''.join(result)
         return result
-    
+
     def plain(self):
         """
         Get a string representation of this XML fragment.
         @return: A I{plain} string.
         @rtype: basestring
         """
-        result = []
-        result.append('<%s' % self.qname())
-        result.append(self.nsdeclarations())
-        for a in [unicode(a) for a in self.attributes]:
-            result.append(' %s' % a)
-        if self.isempty():
-            result.append('/>')
-            return ''.join(result)
-        result.append('>')
-        if self.hasText():
-            result.append(self.text.escape())
-        for c in self.children:
-            result.append(c.plain())
-        result.append('</%s>' % self.qname())
-        result = ''.join(result)
-        return result
+        return self.str(-1)
 
     def nsdeclarations(self):
         """
